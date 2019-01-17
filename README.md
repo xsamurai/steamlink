@@ -17,10 +17,11 @@ I've created a Virtualbox appliance that is configured and setup with steamlink,
 <br>
    
    
-**2. Download my virtualbox ova from:**
+**2. Download my VirtualBox OVA from:**
 
   https://mega.nz/#!AEVUWa7Y!P5iCWd720Z7rwRx5qY4lkmWL--TdK-W__VFaYWeaFXE
-     
+  
+  SIZE: 1.1G
   MD5SUM: ced3d3db58409df5e4fefff417d6bcde
    
    *if the link is down, please send me a message and I will reupload it.*
