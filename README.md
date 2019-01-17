@@ -1,12 +1,45 @@
-# Steam Link Linux Setup
+# Steam Link setup on Linux/Windows/MacOSX
 
-This guide will help you setup Steam Link on your Debian OS or Debian VM which can run on Windows, MacOSX and other Linux Distros.
+<br>
+<br>
+
+I've created a Virtualbox appliance that is configured and setup with steamlink, all you need to do is follow the Quick Setup instructions.  If you would like to build your own VM or install directly onto your Debian based OS, follow the Manual Setup instructions.
+
+<br>
+
+## Quick Setup
 
 
-Follow the directions below or run the script 'setup_steamlink.sh'
+**1. Download and setup VirtualBox on your system.**
+
+   https://www.virtualbox.org/wiki/Downloads
+
+<br>
+   
+   
+**2. Download my virtualbox ova from:**
+
+  https://mega.nz/#!AEVUWa7Y!P5iCWd720Z7rwRx5qY4lkmWL--TdK-W__VFaYWeaFXE
+     
+  MD5SUM: ced3d3db58409df5e4fefff417d6bcde
+   
+   *if the link is down, please send me a message and I will reupload it.*
+   
+  <br> 
+   
+   
+**3. Import the appliance and enjoy.**
+
+   https://docs.oracle.com/cd/E26217_01/E26796/html/qs-import-vm.html
+
+<br>
 
 
-## Step 1: Getting started as Root
+## Manual Setup
+
+
+
+> ### Step 1: Getting started as Root
 
 Download and Install Debian Stretch and run the following steps:
 
@@ -50,9 +83,9 @@ Download and Install Debian Stretch and run the following steps:
 #replace USERNAME with your account
 10. usermod -a -G sudo USERNAME
 ```
+<br>
 
-
-## Step 2: Running SteamLink as normal user
+> ### Step 2: Running SteamLink as normal user
 
 ```
 1. mkdir -p ~/.local/share/SteamLink/
