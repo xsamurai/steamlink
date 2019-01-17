@@ -1,16 +1,14 @@
-#Steam Link Linux Setup
+# Steam Link Linux Setup
 
-This guide will help you setup Steam Link on your PC. You can run this Debian distro in 
-a VM on Windows/Linux/MacOSX or as a stand alone OS. I might write up instructions for Arch Linux 
-in the future.
+This guide will help you setup Steam Link on your Debian OS or Debian VM which can run on Windows, MacOSX and other Linux Distros.
 
 
 
-#Getting started as Root
+## Getting started as Root
 
 Download and Install Debian Stretch and run the following steps:
 
-...
+```
 1. dpkg --add-architecture armhf 
 
 2. echo deb http://archive.raspberrypi.org/debian/ stretch main ui >> /etc/apt/sources.list
@@ -49,13 +47,13 @@ Download and Install Debian Stretch and run the following steps:
 
 #replace USERNAME with your account
 10. usermod -a -G sudo USERNAME
-...
+```
 
 
-#Running SteamLink as normal user
+## Running SteamLink as normal user
 
-...
+```
 1. mkdir -p ~/.local/share/SteamLink/
 1. touch ~/.local/share/SteamLink/.ignore_cpuinfo
 2. /usr/bin/steamlink 
-...
+```
