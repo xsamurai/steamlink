@@ -3,8 +3,10 @@
 This guide will help you setup Steam Link on your Debian OS or Debian VM which can run on Windows, MacOSX and other Linux Distros.
 
 
+Follow the directions below or run the script 'setup_steamlink.sh'
 
-## Getting started as Root
+
+## Step 1: Getting started as Root
 
 Download and Install Debian Stretch and run the following steps:
 
@@ -50,7 +52,7 @@ Download and Install Debian Stretch and run the following steps:
 ```
 
 
-## Running SteamLink as normal user
+## Step 2: Running SteamLink as normal user
 
 ```
 1. mkdir -p ~/.local/share/SteamLink/
