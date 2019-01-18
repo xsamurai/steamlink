@@ -1,9 +1,19 @@
-# Steam Link setup on Linux/Windows/MacOSX
+# Steam Link running in a Virtual Machine or Docker container
 
 <br>
 <br>
+https://store.steampowered.com/app/353380/Steam_Link/
+<br>
+
+## Docker container
+
+Follow the instructions in the docker folder.
+
+
+## Virtual Machine
 
 I've created a Virtualbox appliance that is configured and setup with steamlink, all you need to do is follow the Quick Setup instructions.  If you would like to build your own VM or install directly onto your Debian based OS, follow the Manual Setup instructions.
+
 
 <br>
 

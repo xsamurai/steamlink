@@ -1,0 +1,217 @@
+#!/usr/bin/env bash
+#
+# This is the Steam script that typically resides in /usr/bin
+# It will download the Steam Link files if necessary and launch them
+
+UPDATE_URL="http://media.steampowered.com/steamlink/rpi"
+STEAMPACKAGE=steamlink
+STEAMLINK=steamlink.sh
+STEAMLINK_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"/SteamLink
+STEAMLINK_TMPDIR="$STEAMLINK_DATA_HOME/.tmp"
+
+# Get the full name of this script
+export STEAMSCRIPT="$(cd "${0%/*}" && echo "$PWD")/${0##*/}"
+
+# Set up domain for script localization
+export TEXTDOMAIN=steamlink
+
+function show_message()
+{
+	style=$1
+	shift
+	if ! zenity "$style" --no-wrap --text="$*" 2>/dev/null; then
+		case "$style" in
+		--error)
+			title=$"Error"
+			;;
+		--warning)
+			title=$"Warning"
+			;;
+		*)
+			title=$"Note"
+			;;
+		esac
+
+		# Save the prompt in a temporary file because it can have newlines in it
+		tmpfile="$(mktemp || echo "/tmp/steam_message.txt")"
+		echo -e "$*" >"$tmpfile"
+		if [ "$DISPLAY" = "" ]; then
+			cat $tmpfile; echo -n 'Press enter to continue: '; read input
+		else
+			xterm -T "$title" -e "cat $tmpfile; echo -n 'Press enter to continue: '; read input"
+		fi
+		rm -f "$tmpfile"
+	fi
+}
+
+function download_archive()
+{
+	if [ "$DISPLAY" = "" ]; then
+		echo "$1"
+		echo "$2"
+		curl -#Of "$2"
+		result=$?
+	else
+		curl -#Of "$2" 2>&1 | stdbuf -i0 -o0 tr '\r' '\n' | stdbuf -i0 -o0 sed 's,[^0-9]*\([0-9]*\).*,\1,' | zenity --progress --auto-close --no-cancel --width 400 --text="$1\n$2"
+		result=${PIPESTATUS[0]}
+	fi
+	if [ $result -ne 0 ]; then
+		show_message --warning $"Couldn't download archive, aborting update"
+		return $result
+	fi
+
+	# Get the signature and validate the download
+	curl -#Of "$2.sig"
+	result=$?
+	if [ $result -ne 0 ]; then
+		show_message --warning $"Couldn't download archive signature, aborting update"
+		return $result
+	fi
+
+	# Make sure we have the signing key
+	archive=$(basename $2)
+	archive_key=BA23DAE64102FBE0BB140CE5387C648A24C0E740
+	archive_key_fingerprint="BA23 DAE6 4102 FBE0 BB14  0CE5 387C 648A 24C0 E740"
+
+	if ! gpg --list-keys | grep "$archive_key" >/dev/null; then
+		gpg --import <<__EOF__
+-----BEGIN PGP PUBLIC KEY BLOCK-----
+Version: GnuPG v2
+
+mQENBFVvmskBCAC4jYh/wyLWFgE8yVn7hQDa4yP/OIMsD2C49OAQIeovZIbVdLS4
+ZlUgnQGbLae6amDVWaJTBzoKLuIK3qepyodIzRiQQdBJZ5gyV1b3Po7v8+UPPmsT
+gxBdHmaVV4pbxSKmhRwdSSggdvRRUEz6DbYr1r5ZT5W5AYAZB30qI2s8Nu9GL5lq
+rZttPJ40iBEtPnec2gHDaYWeONH900fvULtko6RihlABOyfdSrmapSdXkVKa0nni
+l7j9QBh0VDTp9mNXqbWS+HLCcImUwIeRyVmFnLYtiZcm/CH/3mzaQaAy0WjOdjVD
+HCxF9UohWDd3UexUd360hGvhVMkLvMfkRfMtABEBAAG0OVZhbHZlIFN0ZWFtIExp
+bmsgUmVsZWFzZSBLZXkgPHN0ZWFtbGlua0BzdGVhbXBvd2VyZWQuY29tPokBOAQT
+AQIAIgUCVW+ayQIbAwYLCQgHAwIGFQgCCQoLBBYCAwECHgECF4AACgkQOHxkiiTA
+50BrCgf+M8M81KBvLGCf3JEfz0LVITSVDvNYOai/31qnOE1EC6VYQP0CtEkp7d2S
++UnGhDvS2jxvy7J4wSPcbvjfszkBrconrS75Wt1i/ZApIXFnxUY0evrefWozqc6m
+4X0zagOyiRZyLX+vqUCwMe0SQIdTIPvIKeaoqXZvMmbnoZAkX0Z8boIIw/FKggwF
+u26WXofe3z/c2YGCrW3/1vscsFMTDI5ItxVseJt202fW+9lElQjOjPrmheMTEOZg
+znDxXUq5GzZ9Zv9r4Fz+p84mt6W9wpaMXriC2rOCGLft//aae8530vtx4OwwqLjT
+T+aHD1bE1lL2iVZtu4CpcRVknHVrM7kBDQRVb5rJAQgAuB5mrhaPUreTowZ9lO9l
+f0iOn26W5BWM3C1/KgPoQo59qCWmUog8cw9zYZdw4dUTgoZT9HA49QhZejmgGrFs
+ovpcmdlAjSawroDJpt0zGiVmMqad8Nq400hb6XZLNdrf8hKergnCFKODQxob6XWO
+D0oH3IK7bt/i9cL9Y30KgOEUIxDWXf8MaLo39E/ShVFfj6k8dzhtyb46S5NQgWdT
+/iFMXxYjwN2L6X7yfAuh5lhdOMiw6QhSQrSZ2z6DRQQKLPZtgTIHPZmw4PY6mZeN
+pw8DFGZpqvUGXH54nAmtrf8zpPeH1NnEivMKpyq1+N7Kc6KTx5Q1/Eo8CsxGFMIW
+kwARAQABiQEfBBgBAgAJBQJVb5rJAhsMAAoJEDh8ZIokwOdA09oH/REJkUT0pdF6
+J4lUqZY2pwDhv5Roo77FJfOb/H6182v0xxzv0vfKD+0LGBCbPBbCNRGGzbLzPAHY
+JJUiujlUcAfP++4QAqL/fYAeD19L5J2GGSN3K0aFCgnlqQnVZUMiUx+p/h4p4g1n
++Ie9ocd1hyjWNkRBznNekoF6FL6sJQ/qn/OL3OJBET6H2MvgsEjJ7oeOpjKF5dJ/
+olClj4cen8xgTYNFlxELFJRpTOSKozOIt12uR++lGsCi9uECxJxP01qBIgOTyvLw
+l0LYZQs8UU8uoQiN0/TU/f28mab+9eh4EZJv2ttQmfcq/RpYX6gpJGcYJQyDoA8d
+AX6m+QXmZnM=
+=yB6a
+-----END PGP PUBLIC KEY BLOCK-----
+__EOF__
+	fi
+
+	result=$(gpg --verify $archive.sig $archive 2>&1)
+	if echo "$result" | grep "$archive_key_fingerprint" >/dev/null; then
+		return 0
+	else
+		echo "$result"
+		show_message --warning $"Couldn't verify archive signature, aborting update"
+		return 1
+	fi
+}
+
+function extract_archive()
+{
+	case "$2" in
+	*.gz)
+		BF=$(($(gzip --list "$2" | sed -n -e "s/.*[[:space:]]\+[0-9]\+[[:space:]]\+\([0-9]\+\)[[:space:]].*$/\1/p") / $((512 * 100)) + 1))
+		;;
+	*.xz)
+		BF=$(($(xz --robot --list "$2" | grep totals | awk '{print $5}') / $((512 * 100)) + 1))
+		;;
+	*)
+		BF=""
+		;;
+	esac
+	if [ "$DISPLAY" = "" -o "$BF" = "" ]; then
+		echo "$1"
+		tar -xf "$2" -C "$3"
+		return $?
+	else
+		tar --blocking-factor=${BF} --checkpoint=1 --checkpoint-action='exec=echo $TAR_CHECKPOINT' -xf "$2" -C "$3" | zenity --progress --auto-close --no-cancel --width 400 --text="$1"
+		return ${PIPESTATUS[0]}
+	fi
+}
+
+
+# First run, put the icon on the user's desktop
+if [ ! -d "$STEAMLINK_DATA_HOME" ]; then
+	# try to read ~/.config/user-dirs.dirs to get the current desktop configuration
+	# http://www.freedesktop.org/wiki/Software/xdg-user-dirs
+	test -f "${XDG_CONFIG_HOME:-$HOME/.config}/user-dirs.dirs" && source "${XDG_CONFIG_HOME:-$HOME/.config}/user-dirs.dirs"
+	DESKTOP_DIR="${XDG_DESKTOP_DIR:-$HOME/Desktop}"
+
+	if [ -d "$DESKTOP_DIR" ]; then
+		cp "/usr/share/applications/$STEAMPACKAGE.desktop" "$DESKTOP_DIR"
+		chmod +x "$DESKTOP_DIR/$STEAMPACKAGE.desktop"
+	fi
+fi
+
+# Make sure the app is up to date
+if [ "$1" = "--skip-update" ]; then
+	UPDATE_URL=""
+	shift
+elif [ -f "$STEAMLINK_DATA_HOME/update_url" ]; then
+	UPDATE_URL=$(cat "$STEAMLINK_DATA_HOME/update_url")
+fi
+if [ "$UPDATE_URL" != "" ]; then
+	UPDATE_BRANCH=$(cat "$STEAMLINK_DATA_HOME/.update_branch" 2>/dev/null)
+	if [ "$UPDATE_BRANCH" = "" ]; then
+		UPDATE_BRANCH="public"
+	fi
+	latest=$(curl -s "$UPDATE_URL/${UPDATE_BRANCH}_build.txt")
+	current=$(cat "$STEAMLINK_DATA_HOME/.version" 2>/dev/null)
+	if [ "$current" != "$latest" ]; then
+		# Save the umask and set strong permissions
+		omask="$(umask)"
+		umask 0077
+
+		mkdir -p "$STEAMLINK_TMPDIR"
+		pushd "$STEAMLINK_TMPDIR" >/dev/null
+		archive=$(basename "$latest")
+		if download_archive "Downloading update" "$latest"; then
+			mkdir -p update
+			if extract_archive "Unpacking update" "$archive" update; then
+				if [ -f update/steamlink/$STEAMLINK ]; then
+					# Save the old files, just in case
+					echo "Moving original files to $STEAMLINK_DATA_HOME/.old"
+					rm -rf "$STEAMLINK_DATA_HOME/.old"
+					mkdir "$STEAMLINK_DATA_HOME/.old"
+					mv "$STEAMLINK_DATA_HOME/"* "$STEAMLINK_DATA_HOME/.old"
+
+					# Move the new files into place
+					mv update/steamlink/* "$STEAMLINK_DATA_HOME"
+
+					# Note that we're updated to the new version
+					echo "$latest" >"$STEAMLINK_DATA_HOME/.version"
+				else
+					show_message --warning $"Couldn't find $STEAMLINK in update, ignoring..."
+				fi
+			fi
+		fi
+		rm -f $archive $archive.sig
+		popd >/dev/null
+		rm -rf "$STEAMLINK_TMPDIR"
+
+		# Restore the umask
+		umask "$omask"
+	fi
+fi
+
+# Launch the Steam Link app if possible
+if [ -x "$STEAMLINK_DATA_HOME/$STEAMLINK" ]; then
+    cp /opt/steamlink.sh "$STEAMLINK_DATA_HOME/$STEAMLINK" 
+	exec "$STEAMLINK_DATA_HOME/$STEAMLINK" "$@"
+else
+	show_message -error $"Couldn't download Steam Link application, aborting"
+fi
+exit 255
