@@ -1,14 +1,16 @@
 # Steam Link running in a Virtual Machine or Docker container
 
-<br>
-<br>
+
 https://store.steampowered.com/app/353380/Steam_Link/
-<br>
 
 ## Docker container
 
 Follow the instructions in the docker folder.
 
+<br>
+<br>
+<br>
+<br>
 
 ## Virtual Machine
 
