@@ -42,7 +42,7 @@ I've created a Virtualbox appliance that is configured and setup with steamlink,
 
 > ### Step 1: Getting started as Root
 
-Download and Install Debian Stretch and run the following steps:
+Download and Install Debian Stretch with Xwindows and after that run the following steps:
 
 ```
 1. dpkg --add-architecture armhf 
